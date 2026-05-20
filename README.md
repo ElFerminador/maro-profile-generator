@@ -17,7 +17,7 @@ Dazu eine Begründung "Warum dieses Profil?" und ein Mahlgrad-Hinweis je nach Bo
 
 ## Live
 
-➜ **[hier ausprobieren](https://USERNAME.github.io/maro-profile-generator/)**
+➜ **[hier ausprobieren](https://ElFerminador.github.io/maro-profile-generator/)**
 
 ## Was es nicht ist
 
