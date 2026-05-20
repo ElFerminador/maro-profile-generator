@@ -53,7 +53,7 @@ Daraus wird ein 4-Stage-Profil generiert: Pre-Infusion → Sättigung → Haupt-
 ## Selbst hosten
 
 ```bash
-git clone https://github.com/USERNAME/maro-profile-generator.git
+git clone https://github.com/ElFerminador/maro-profile-generator.git
 ```
 
 Datei in den Browser ziehen — fertig. Oder auf GitHub Pages aktivieren (Settings → Pages → Branch `main` / `(root)`).
