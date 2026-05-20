@@ -1,0 +1,1101 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maro Profile Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0d0b;
+    --bg-soft: #16140f;
+    --ink: #f3ead8;
+    --ink-dim: #a39a85;
+    --ink-faint: #5b5448;
+    --line: #2a2620;
+    --accent: #d97742;      /* crema orange */
+    --accent-soft: #b85d2e;
+    --pressure: #d97742;
+    --flow: #6fb0c4;
+    --warn: #d4b144;
+    --good: #7bb56c;
+    --shadow: rgba(0,0,0,0.0);
+  }
+  [data-theme="light"] {
+    --bg: #faf7f1;
+    --bg-soft: #ffffff;
+    --ink: #2a241c;
+    --ink-dim: #6b6253;
+    --ink-faint: #a8a190;
+    --line: #e8e2d4;
+    --accent: #c8612a;
+    --accent-soft: #a04d1e;
+    --pressure: #c8612a;
+    --flow: #4a8a9e;
+    --warn: #b89425;
+    --good: #5d9450;
+    --shadow: rgba(60,40,20,0.06);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(217,119,66,0.08), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 100%, rgba(111,176,196,0.05), transparent 60%);
+    min-height: 100vh;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+  [data-theme="light"] body {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(200,97,42,0.06), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 100%, rgba(74,138,158,0.04), transparent 60%);
+  }
+  .panel, .chart-wrap, .stage-card, .rationale {
+    box-shadow: 0 1px 0 var(--shadow);
+  }
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+  }
+  header {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .title {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: clamp(36px, 5vw, 56px);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin: 0;
+  }
+  .title em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent);
+  }
+  .subtitle {
+    color: var(--ink-dim);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 40px;
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 24px;
+  }
+  .panel h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 20px;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+  }
+  .panel h2 .num {
+    color: var(--accent);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    margin-right: 8px;
+    vertical-align: 4px;
+  }
+  .panel-hint {
+    color: var(--ink-faint);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+  }
+  .field { margin-bottom: 18px; }
+  .field-label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-dim);
+    margin-bottom: 8px;
+  }
+  .opts {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .opt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    color: var(--ink-dim);
+    transition: all 0.12s ease;
+    font-size: 13px;
+  }
+  .opt:hover { color: var(--ink); background: rgba(255,255,255,0.02); }
+  .opt input { display: none; }
+  .opt .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 1px solid var(--ink-faint);
+    flex-shrink: 0;
+  }
+  .opt.selected { color: var(--ink); border-color: var(--line); background: rgba(217,119,66,0.04); }
+  .opt.selected .dot { background: var(--accent); border-color: var(--accent); }
+  select, input[type="number"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 13px;
+    border-radius: 0;
+    outline: none;
+  }
+  select:focus, input:focus { border-color: var(--accent); }
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 24px;
+  }
+  button {
+    font-family: inherit;
+    background: var(--accent);
+    color: #1a1410;
+    border: 0;
+    padding: 12px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.12s ease;
+  }
+  button:hover { background: #e8854f; }
+  button.ghost {
+    background: transparent;
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+  }
+  button.ghost:hover { color: var(--ink); border-color: var(--ink-faint); }
+
+  .results { display: flex; flex-direction: column; gap: 32px; }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+  @media (max-width: 600px) { .meta-grid { grid-template-columns: repeat(2, 1fr); } }
+  .meta {
+    border-left: 1px solid var(--accent);
+    padding: 4px 0 4px 14px;
+  }
+  .meta-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-dim);
+  }
+  .meta-value {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--ink);
+    margin-top: 2px;
+    letter-spacing: -0.01em;
+  }
+  .meta-value .unit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin-left: 4px;
+    font-weight: 400;
+  }
+
+  .chart-wrap {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    padding: 20px;
+    position: relative;
+  }
+  .chart-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 14px;
+  }
+  .chart-title h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    margin: 0;
+    font-size: 16px;
+  }
+  .legend { display: flex; gap: 16px; font-size: 11px; color: var(--ink-dim); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i {
+    display: inline-block;
+    width: 18px; height: 2px;
+  }
+  .legend i.p { background: var(--pressure); }
+  .legend i.f { background: var(--flow); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  th {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-dim);
+    font-weight: 500;
+    border-bottom: 1px solid var(--ink-faint);
+  }
+  td.idx { color: var(--accent); font-weight: 600; width: 28px; }
+  td.mode {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  td.mode.pressure { color: var(--pressure); }
+  td.mode.flow { color: var(--flow); }
+  .rationale {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    padding: 20px 24px;
+    color: var(--ink-dim);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .rationale h3 {
+    font-family: 'Fraunces', serif;
+    color: var(--ink);
+    font-weight: 400;
+    font-size: 16px;
+    margin: 0 0 10px;
+  }
+  .rationale ul { margin: 0; padding-left: 20px; }
+  .rationale li { margin-bottom: 6px; }
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-faint);
+    font-size: 11px;
+    text-align: center;
+    letter-spacing: 0.06em;
+  }
+  footer a { color: var(--ink-dim); text-decoration: none; }
+  footer a:hover { color: var(--accent); }
+
+  .empty {
+    text-align: center;
+    color: var(--ink-faint);
+    padding: 80px 20px;
+    border: 1px dashed var(--line);
+  }
+  .empty .big {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 24px;
+    color: var(--ink-dim);
+    margin-bottom: 8px;
+  }
+
+  /* Theme toggle */
+  .theme-toggle {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+    width: 38px; height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0;
+  }
+  .theme-toggle:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: transparent;
+  }
+  .theme-toggle .icon-sun { display: none; }
+  .theme-toggle .icon-moon { display: block; }
+  [data-theme="light"] .theme-toggle .icon-sun { display: block; }
+  [data-theme="light"] .theme-toggle .icon-moon { display: none; }
+
+  /* Stage cards (Maro-Home-Style) */
+  .stages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .stage-card {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 16px;
+    padding: 16px 18px;
+    background: rgba(255,255,255,0.015);
+    border: 1px solid var(--line);
+    border-left: 2px solid var(--accent);
+  }
+  .stage-num {
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    font-weight: 300;
+    color: var(--accent);
+    line-height: 1;
+    padding-top: 4px;
+  }
+  .stage-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .stage-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 17px;
+    color: var(--ink);
+  }
+  .stage-mode {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+  .stage-mode.pressure {
+    color: var(--pressure);
+    background: rgba(217,119,66,0.08);
+    border: 1px solid rgba(217,119,66,0.25);
+  }
+  .stage-mode.flow {
+    color: var(--flow);
+    background: rgba(111,176,196,0.08);
+    border: 1px solid rgba(111,176,196,0.25);
+  }
+  .stage-sentence {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--ink-dim);
+    margin-bottom: 8px;
+  }
+  .stage-stop {
+    font-size: 12px;
+    color: var(--ink-dim);
+    margin-bottom: 6px;
+  }
+  .stage-stop strong {
+    color: var(--good);
+    font-weight: 500;
+  }
+  .stop-label {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 10px;
+    color: var(--ink-faint);
+    margin-right: 4px;
+  }
+  .stage-note {
+    font-size: 11px;
+    color: var(--ink-faint);
+    font-style: italic;
+    border-top: 1px dashed var(--line);
+    padding-top: 8px;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1 class="title">Maro <em>Profile</em> Generator</h1>
+      <div class="subtitle">Regelbasiert · für Maro Model 1 · v0.4</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 24px;">
+      <button class="theme-toggle" id="themeToggle" aria-label="Hell/Dunkel umschalten" title="Hell/Dunkel umschalten">
+        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="7.05" y2="7.05"/><line x1="16.95" y1="16.95" x2="19.07" y2="19.07"/><line x1="4.93" y1="19.07" x2="7.05" y2="16.95"/><line x1="16.95" y1="7.05" x2="19.07" y2="4.93"/></svg>
+      </button>
+      <div style="text-align: right; color: var(--ink-faint); font-size: 11px; line-height: 1.6;">
+        inspiriert von Stéphane Ribes'<br>Decent Espresso Profile Generator
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- ============= INPUT PANEL ============= -->
+    <aside class="panel">
+      <h2><span class="num">01</span>Bohnen &amp; Setup</h2>
+      <div class="panel-hint">Beantworte was du weisst</div>
+
+      <div class="field">
+        <label class="field-label">Röstgrad</label>
+        <div class="opts" data-field="roast">
+          <label class="opt"><input type="radio" name="roast" value="light"><span class="dot"></span>Hell <span style="color:var(--ink-faint);font-size:11px;">(Cinnamon)</span></label>
+          <label class="opt"><input type="radio" name="roast" value="city"><span class="dot"></span>Mittel <span style="color:var(--ink-faint);font-size:11px;">(City)</span></label>
+          <label class="opt"><input type="radio" name="roast" value="fullcity"><span class="dot"></span>Dunkel <span style="color:var(--ink-faint);font-size:11px;">(Full City+)</span></label>
+          <label class="opt"><input type="radio" name="roast" value="unknown"><span class="dot"></span>Keine Ahnung</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Röstqualität</label>
+        <div class="opts" data-field="quality">
+          <label class="opt"><input type="radio" name="quality" value="under"><span class="dot"></span>Unterentwickelt</label>
+          <label class="opt"><input type="radio" name="quality" value="smoky"><span class="dot"></span>Rauchig / überröstet</label>
+          <label class="opt"><input type="radio" name="quality" value="outstanding"><span class="dot"></span>Herausragend</label>
+          <label class="opt"><input type="radio" name="quality" value="unknown"><span class="dot"></span>Keine Ahnung</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Herkunft</label>
+        <div class="opts" data-field="origin">
+          <label class="opt"><input type="radio" name="origin" value="kenya"><span class="dot"></span>Kenia</label>
+          <label class="opt"><input type="radio" name="origin" value="ethiopia"><span class="dot"></span>Äthiopien</label>
+          <label class="opt"><input type="radio" name="origin" value="africa"><span class="dot"></span>Anderes Afrika</label>
+          <label class="opt"><input type="radio" name="origin" value="colombia"><span class="dot"></span>Kolumbien</label>
+          <label class="opt"><input type="radio" name="origin" value="america"><span class="dot"></span>Anderes Amerika</label>
+          <label class="opt"><input type="radio" name="origin" value="other"><span class="dot"></span>Anderes / Blend</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Hervorheben</label>
+        <div class="opts" data-field="highlight">
+          <label class="opt"><input type="radio" name="highlight" value="body"><span class="dot"></span>Body / Mouthfeel</label>
+          <label class="opt"><input type="radio" name="highlight" value="sweet"><span class="dot"></span>Süsse &amp; Säure</label>
+          <label class="opt"><input type="radio" name="highlight" value="floral"><span class="dot"></span>Floral / fruchtig</label>
+          <label class="opt"><input type="radio" name="highlight" value="choco"><span class="dot"></span>Schokolade / Nüsse</label>
+          <label class="opt"><input type="radio" name="highlight" value="unknown"><span class="dot"></span>Keine Präferenz</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Vermeiden</label>
+        <div class="opts" data-field="avoid">
+          <label class="opt"><input type="radio" name="avoid" value="sour"><span class="dot"></span>Säure</label>
+          <label class="opt"><input type="radio" name="avoid" value="bitter"><span class="dot"></span>Bitterkeit / Astringenz</label>
+          <label class="opt"><input type="radio" name="avoid" value="none"><span class="dot"></span>Nichts Bestimmtes</label>
+        </div>
+      </div>
+
+      <h2 style="margin-top: 32px;"><span class="num">02</span>Shot</h2>
+      <div class="panel-hint">Wie stark, wie viel</div>
+
+      <div class="field">
+        <label class="field-label">Intensität</label>
+        <select id="intensity">
+          <option value="allonge">Allongé (4.5 – 5.5% TDS)</option>
+          <option value="low">Tief (7.0 – 8.0% TDS)</option>
+          <option value="medium" selected>Mittel (8.0 – 9.5% TDS)</option>
+          <option value="high">Hoch (9.5 – 11.0% TDS)</option>
+          <option value="ristretto">Ristretto (11.0 – 12.5% TDS)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Dosis (g)</label>
+        <select id="dose">
+          <option>14</option><option>15</option><option>16</option>
+          <option selected>18</option><option>19</option><option>20</option>
+          <option>21</option><option>22</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Puck Prep</label>
+        <div class="opts" data-field="puck">
+          <label class="opt"><input type="radio" name="puck" value="bad"><span class="dot"></span>Kann besser sein</label>
+          <label class="opt"><input type="radio" name="puck" value="ok"><span class="dot"></span>OK</label>
+          <label class="opt"><input type="radio" name="puck" value="excellent"><span class="dot"></span>Exzellent (WDT, Tamper-Level)</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Bohnen-Frische</label>
+        <div class="opts" data-field="freshness">
+          <label class="opt"><input type="radio" name="freshness" value="fresh"><span class="dot"></span>Frisch <span style="color:var(--ink-faint);font-size:11px;">(&lt; 4 Tage nach Röstung)</span></label>
+          <label class="opt"><input type="radio" name="freshness" value="optimal"><span class="dot"></span>Optimal <span style="color:var(--ink-faint);font-size:11px;">(4–21 Tage, Tüte zu)</span></label>
+          <label class="opt"><input type="radio" name="freshness" value="tired"><span class="dot"></span>Müde <span style="color:var(--ink-faint);font-size:11px;">(offen seit Tagen)</span></label>
+          <label class="opt"><input type="radio" name="freshness" value="old"><span class="dot"></span>Alt <span style="color:var(--ink-faint);font-size:11px;">(&gt; 6 Wo. oder lange offen)</span></label>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="generate">Profil generieren</button>
+        <button class="ghost" id="reset">Reset</button>
+      </div>
+    </aside>
+
+    <!-- ============= RESULTS ============= -->
+    <main class="results" id="results">
+      <div class="empty">
+        <div class="big">Noch keine Eingaben.</div>
+        <div>Links die Felder ausfüllen, dann generieren.</div>
+      </div>
+    </main>
+  </div>
+
+  <footer>
+    Single-file static · läuft überall · <a href="#" id="download">Diese Seite herunterladen</a>
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   MARO PROFILE GENERATOR — regelbasiert
+   ============================================================ */
+
+// ----- 1. State -----
+const state = {
+  roast: 'city',
+  quality: 'outstanding',
+  origin: 'ethiopia',
+  highlight: 'floral',
+  avoid: 'bitter',
+  intensity: 'medium',
+  dose: 18,
+  puck: 'ok',
+  freshness: 'optimal',
+};
+
+// Initial-Selection markieren
+document.querySelectorAll('.opts').forEach(group => {
+  const field = group.dataset.field;
+  const opts = group.querySelectorAll('.opt');
+  opts.forEach(opt => {
+    const inp = opt.querySelector('input');
+    if (inp.value === state[field]) opt.classList.add('selected');
+    opt.addEventListener('click', () => {
+      opts.forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      state[field] = inp.value;
+    });
+  });
+});
+document.getElementById('intensity').addEventListener('change', e => state.intensity = e.target.value);
+document.getElementById('dose').addEventListener('change', e => state.dose = +e.target.value);
+
+// ----- 2. Regelwerk -----
+/*
+  Die Profil-Logik baut auf bekannten Heuristiken auf:
+  - Helle Röstung → höhere Temperatur, längere Pre-Infusion, niedrigerer Peak-Druck
+  - Dunkle Röstung → tiefere Temp, kürzere PI, sanftere Extraktion
+  - Floral/Fruity → längere Pre-Infusion, Flow-orientierte Extraktion
+  - Body → höherer Peak-Druck, Pressure-Profil
+  - Vermeide Säure → längere/wärmere Extraktion
+  - Vermeide Bitterkeit → kürzere/kühlere, declining pressure
+*/
+
+function buildProfile(s) {
+  // --- Basis-Parameter (kalibriert an realem Maro-Profil) ---
+  let temp = 92.5;                  // °C im Brewhead
+  let ratio = 2.0;                  // shot/dose
+  let peakPressure = 8.5;           // bar
+  let mainFlow = 2.5;               // ml/s
+  let preInfTime = 10;              // s (Maro-typisch)
+  let bloomTime = 6;                // s (für Berechnung, nicht direkt verwendet)
+  let bloomPressure = 4.0;          // bar
+
+  const notes = [];
+
+  // --- Röstgrad ---
+  if (s.roast === 'light') {
+    temp += 2.0; preInfTime += 4; peakPressure -= 0.5; bloomPressure -= 0.5;
+    notes.push('Helle Röstung → höhere Temperatur (94.5 °C) und längere Pre-Infusion, um die Bohne zu durchdringen.');
+  } else if (s.roast === 'fullcity') {
+    temp -= 2.0; preInfTime -= 0; peakPressure -= 0.5;
+    notes.push('Dunkle Röstung → tiefere Temperatur (90.5 °C) und sanfterer Peak-Druck, um Bitternoten zu vermeiden.');
+  }
+
+  // --- Qualität ---
+  if (s.quality === 'under') {
+    temp += 1.0;
+    notes.push('Unterentwickelte Röstung → +1 °C, um Säure zu mildern.');
+  } else if (s.quality === 'smoky') {
+    temp -= 1.5; peakPressure -= 0.5;
+    notes.push('Rauchige Röstung → kühler und sanfter, um Bitterkeit zu reduzieren.');
+  }
+
+  // --- Herkunft ---
+  if (s.origin === 'kenya' || s.origin === 'ethiopia') {
+    preInfTime += 2;
+    notes.push('Ostafrikanische Bohne → längere Pre-Infusion betont die fruchtige Klarheit.');
+  } else if (s.origin === 'colombia' || s.origin === 'america') {
+    // balanced – keine Anpassung
+  }
+
+  // --- Hervorheben ---
+  let modeBias = 'mixed';  // 'pressure' | 'flow' | 'mixed'
+  if (s.highlight === 'body') {
+    peakPressure += 0.5; modeBias = 'pressure';
+    notes.push('Body hervorheben → Pressure-Profile mit Peak ~9 bar.');
+  } else if (s.highlight === 'sweet') {
+    peakPressure -= 0.5; mainFlow = 1.8; modeBias = 'flow';
+    notes.push('Süsse hervorheben → Flow-Profile mit moderatem Druck.');
+  } else if (s.highlight === 'floral') {
+    peakPressure -= 1.0; mainFlow = 1.7; preInfTime += 2; modeBias = 'flow';
+    notes.push('Florale Noten hervorheben → tieferer Druck, niedrigerer Fluss, längere Pre-Infusion.');
+  } else if (s.highlight === 'choco') {
+    peakPressure += 0.3; mainFlow = 2.2; modeBias = 'pressure';
+    notes.push('Schokoladige Noten → leicht höherer Druck, etwas mehr Fluss.');
+  }
+
+  // --- Vermeiden ---
+  if (s.avoid === 'sour') {
+    temp += 0.5; preInfTime += 1;
+    notes.push('Säure vermeiden → wärmer und längere Vorbereitung der Extraktion.');
+  } else if (s.avoid === 'bitter') {
+    peakPressure -= 0.3; temp -= 0.5;
+    notes.push('Bitterkeit vermeiden → tieferer Druck und sanftere Kurve mit declining pressure am Ende.');
+  }
+
+  // --- Intensität → Brew Ratio ---
+  const ratioMap = {
+    allonge: 5.0, low: 2.8, medium: 2.2, high: 1.8, ristretto: 1.5
+  };
+  ratio = ratioMap[s.intensity];
+
+  // --- Puck Prep ---
+  if (s.puck === 'bad') {
+    peakPressure -= 0.5; mainFlow -= 0.2;
+    notes.push('Schwacher Puck → sanftere Extraktion, um Channeling zu reduzieren.');
+  } else if (s.puck === 'excellent') {
+    // kann am Limit fahren
+    notes.push('Exzellenter Puck → Profil kann nah am Optimum gefahren werden.');
+  }
+
+  // --- Bohnen-Frische ---
+  let grindHint = '';
+  if (s.freshness === 'fresh') {
+    preInfTime += 3; bloomTime += 2; peakPressure -= 0.3;
+    grindHint = 'Frische Bohnen: gröber mahlen als sonst — viel CO₂ erzeugt Widerstand.';
+    notes.push('Frische Bohnen (<4 Tage) → längere Pre-Infusion und Bloom, um CO₂ zu entgasen; sanfter Peak gegen Channeling.');
+  } else if (s.freshness === 'tired') {
+    temp += 0.5; preInfTime -= 1;
+    grindHint = 'Müde Bohnen: leicht feiner mahlen, um Extraktion auszugleichen.';
+    notes.push('Müde Bohnen (Tüte länger offen) → +0.5 °C und kürzere Pre-Infusion, um verlorene Aromastoffe zu kompensieren.');
+  } else if (s.freshness === 'old') {
+    temp += 1.0; peakPressure -= 0.4; preInfTime -= 2;
+    grindHint = 'Alte Bohnen: deutlich feiner mahlen — wenig CO₂, brauchen mehr Widerstand.';
+    notes.push('Alte Bohnen → wärmer extrahieren, kürzere Pre-Infusion, sanfterer Druck gegen Tail-End-Bitterkeit.');
+  }
+
+  // --- Stop-Gewicht ---
+  const stopWeight = Math.round(s.dose * ratio * 10) / 10;
+
+  // --- Stages bauen (Maro-Native-Semantik) ---
+  // Stage = { name, mode, target (Zielwert), transitionTime (Sekunden bis Ziel),
+  //           limit (max der anderen Grösse), stop { type, value, unit } }
+  // Maro-Syntax: "X in Ys with a limit of Y" + "Stop: ..."
+  // Folgestages starten implizit vom letzten Wert ("Transition from last value")
+  const stages = [];
+
+  // Stage 1: Pre-Infusion (Flow-controlled, Druck-Limit)
+  // An deinem Profil kalibriert: 2.5 ml/s in 5s, 3.5 bar Limit, Stop 10s
+  const piFlow = round1(2.5);
+  const piPressureLimit = round1(3.5);
+  const piStopTime = preInfTime;  // gesamt PI-Zeit (Rampe + Halten)
+  stages.push({
+    name: 'Pre-Infusion',
+    mode: 'flow',
+    target: { value: piFlow, unit: 'ml/s' },
+    transitionTime: 5,
+    limit: { value: piPressureLimit, unit: 'bar' },
+    stop: { type: 'time', value: piStopTime, unit: 's' },
+    notes: 'Sanftes Befeuchten, Druck baut sich passiv auf'
+  });
+
+  // Stage 2: Saturation Ramp (Aufbau zum mittleren Druck, "Lever-Style"-Start)
+  // Maro-typisch ~5 bar, etwas tiefer für floral/sweet, etwas höher für body
+  const satPressure = round1(Math.max(4.5, peakPressure - 3.0));
+  stages.push({
+    name: 'Sättigung',
+    mode: 'pressure',
+    target: { value: satPressure, unit: 'bar' },
+    transitionTime: 1.5,
+    limit: { value: 5.0, unit: 'ml/s' },
+    stop: { type: 'time', value: 8, unit: 's' },
+    notes: 'Druck aufbauen, Puck gleichmässig sättigen'
+  });
+
+  // Stage 3: Peak Extraction (Hauptphase)
+  // Hier passt sich Mode-Bias an: Body/Choco → Pressure, Floral/Sweet → kann Flow sein
+  const peakStopType = (s.highlight === 'body' || s.highlight === 'choco' || modeBias === 'pressure')
+    ? 'time' : 'weight';
+  const peakStopValue = peakStopType === 'weight'
+    ? round1(stopWeight - 4)
+    : 7;
+
+  if (modeBias === 'flow') {
+    stages.push({
+      name: 'Haupt-Extraktion',
+      mode: 'flow',
+      target: { value: round1(mainFlow), unit: 'ml/s' },
+      transitionTime: 1.5,
+      limit: { value: round1(peakPressure), unit: 'bar' },
+      stop: { type: peakStopType, value: peakStopValue, unit: peakStopType === 'weight' ? 'g' : 's' },
+      notes: 'Hauptextraktion mit konstantem Fluss'
+    });
+  } else {
+    stages.push({
+      name: 'Haupt-Extraktion',
+      mode: 'pressure',
+      target: { value: round1(peakPressure), unit: 'bar' },
+      transitionTime: 1.5,
+      limit: { value: 5.0, unit: 'ml/s' },  // generöses Flow-Limit (Maro-typisch)
+      stop: { type: peakStopType, value: peakStopValue, unit: peakStopType === 'weight' ? 'g' : 's' },
+      notes: 'Hauptextraktion am Peak-Druck'
+    });
+  }
+
+  // Stage 4: Decline / Finish — Lever-Style declining pressure
+  // Immer dabei: Maro-Profile haben fast immer 4 Stages mit Decline-Ende
+  const declinePressure = round1(Math.max(4.5, peakPressure - 3.0));
+  // Stop-Bedingung: bei Pressure-Bias (Body/Choco) typisch Time, bei Flow-Bias (Floral/Sweet) Weight
+  const declineStop = (modeBias === 'pressure')
+    ? { type: 'time', value: 5, unit: 's' }
+    : { type: 'weight', value: stopWeight, unit: 'g' };
+
+  stages.push({
+    name: 'Decline',
+    mode: 'pressure',
+    target: { value: declinePressure, unit: 'bar' },
+    transitionTime: 1.5,
+    limit: { value: 5.0, unit: 'ml/s' },
+    stop: declineStop,
+    notes: 'Sanftes Ausklingen (Lever-Style), reduziert Tail-End-Bitterkeit'
+  });
+
+  return {
+    temp: round1(temp),
+    ratio: round2(ratio),
+    stopWeight,
+    peakPressure: round1(peakPressure),
+    mainFlow: round1(mainFlow),
+    stages,
+    notes,
+    grindHint,
+  };
+}
+
+function round1(x) { return Math.round(x * 10) / 10; }
+function round2(x) { return Math.round(x * 100) / 100; }
+
+// ----- 3. Curve simulation -----
+// Maro-Modell: jede Stage geht "from last value to target" in transitionTime,
+// hält dann den Wert bis stop erreicht ist.
+function simulate(profile) {
+  const points = [];
+  let t = 0;
+  const dt = 0.2;
+  const dose = state.dose;
+  const absorbed = dose * 2;
+  let totalVolume = 0;
+  let weight = 0;
+
+  // Anfangswerte
+  let lastPressure = 0;
+  let lastFlow = 0;
+
+  for (const stage of profile.stages) {
+    let stageT = 0;
+    const startPressure = lastPressure;
+    const startFlow = lastFlow;
+    const targetVal = stage.target.value;
+    const trans = stage.transitionTime || 1;
+
+    while (stageT < 90) { // safety
+      const ramp = Math.min(stageT / trans, 1);
+      let p, f;
+      if (stage.mode === 'pressure') {
+        p = startPressure + (targetVal - startPressure) * ramp;
+        f = Math.min(stage.limit.value, estimateFlow(p));
+      } else { // flow
+        f = startFlow + (targetVal - startFlow) * ramp;
+        p = Math.min(stage.limit.value, estimatePressure(f));
+      }
+
+      points.push({ t: round1(t), p: round1(p), f: round1(f), stage: stage.name });
+      lastPressure = p; lastFlow = f;
+
+      totalVolume += f * dt;
+      weight = Math.max(0, totalVolume - absorbed);
+
+      // Stop?
+      const st = stage.stop;
+      if (st.type === 'time' && stageT >= st.value) break;
+      if (st.type === 'pressure' && p >= st.value) break;
+      if (st.type === 'flow' && f >= st.value) break;
+      if (st.type === 'weight' && weight >= st.value) break;
+
+      t += dt;
+      stageT += dt;
+    }
+  }
+  return { points, totalTime: round1(t), finalWeight: round1(weight) };
+}
+
+// Grobe Modelle für die Visualisierung (nicht physikalisch akkurat,
+// nur damit die Kurve plausibel aussieht und die Shot-Time stimmt):
+function estimateFlow(pressure) {
+  // Maro/Espresso-Realität: bei 9 bar ca. 2-3 ml/s je nach Puck
+  return Math.max(0, pressure * 0.32);
+}
+function estimatePressure(flow) {
+  return Math.max(0, flow * 3.1);
+}
+
+// ----- 4. Rendering -----
+function render() {
+  const profile = buildProfile(state);
+  const sim = simulate(profile);
+
+  const root = document.getElementById('results');
+  root.innerHTML = '';
+
+  // Meta grid
+  const meta = document.createElement('div');
+  meta.className = 'meta-grid';
+  meta.innerHTML = `
+    <div class="meta"><div class="meta-label">Brew Ratio</div><div class="meta-value">1:${profile.ratio}</div></div>
+    <div class="meta"><div class="meta-label">Stop Weight</div><div class="meta-value">${profile.stopWeight}<span class="unit">g</span></div></div>
+    <div class="meta"><div class="meta-label">Temperatur</div><div class="meta-value">${profile.temp}<span class="unit">°C</span></div></div>
+    <div class="meta"><div class="meta-label">Shot Time</div><div class="meta-value">~${sim.totalTime}<span class="unit">s</span></div></div>
+  `;
+  root.appendChild(meta);
+
+  // Chart
+  const chartPanel = document.createElement('div');
+  chartPanel.className = 'chart-wrap';
+  chartPanel.innerHTML = `
+    <div class="chart-title">
+      <h3>Druck &amp; Fluss</h3>
+      <div class="legend">
+        <span><i class="p"></i> Druck (bar)</span>
+        <span><i class="f"></i> Fluss (ml/s)</span>
+      </div>
+    </div>
+    <div id="chart"></div>
+  `;
+  root.appendChild(chartPanel);
+  drawChart(sim, profile);
+
+  // Stages — Maro-Home-Stil als Karten mit Satz-Syntax
+  const stagesPanel = document.createElement('div');
+  stagesPanel.className = 'chart-wrap';
+  stagesPanel.innerHTML = `
+    <div class="chart-title"><h3>Profile Sequence</h3><div class="legend"><span style="color: var(--ink-faint);">So im Expert/Extreme Mode eintippen</span></div></div>
+    <div class="stages-list">
+      ${profile.stages.map((st, i) => renderStageCard(st, i)).join('')}
+    </div>
+  `;
+  root.appendChild(stagesPanel);
+  // Rationale
+  const rat = document.createElement('div');
+  rat.className = 'rationale';
+  const grindBlock = profile.grindHint
+    ? `<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--warn);"><strong style="color: var(--warn); text-transform: uppercase; font-size: 11px; letter-spacing: 0.1em;">Mahlgrad-Hinweis</strong><br>${profile.grindHint}</div>`
+    : '';
+  rat.innerHTML = `
+    <h3>Warum dieses Profil?</h3>
+    <ul>${profile.notes.map(n => `<li>${n}</li>`).join('')}</ul>
+    ${grindBlock}
+  `;
+  root.appendChild(rat);
+}
+
+// Maro-Style Stage-Karte
+function renderStageCard(st, i) {
+  const modeLabel = st.mode === 'pressure' ? 'Pressure' : 'Flow';
+  const modeColor = st.mode === 'pressure' ? 'var(--pressure)' : 'var(--flow)';
+  const stopLabels = { time: 'Stop-Zeit', pressure: 'Stop-Druck', flow: 'Stop-Fluss', weight: 'Stop-Gewicht' };
+  const stopLabel = stopLabels[st.stop.type];
+
+  // Erste Stage = "X ml/s in Ys mit einem Limit von Y bar"
+  // Folgestages = "Verlauf von letztem Wert zu X in Ys mit einem Limit von Y"
+  const targetHtml = `<strong style="color: ${modeColor};">${st.target.value} ${st.target.unit}</strong>`;
+  const limitHtml = `<strong style="color: ${st.mode === 'pressure' ? 'var(--flow)' : 'var(--pressure)'};">${st.limit.value} ${st.limit.unit}</strong>`;
+  const transHtml = `<strong style="color: var(--ink);">${st.transitionTime}s</strong>`;
+
+  const sentence = i === 0
+    ? `${targetHtml} in ${transHtml} mit einem Limit von ${limitHtml}`
+    : `Verlauf von letztem Wert zu ${targetHtml} in ${transHtml} mit einem Limit von ${limitHtml}`;
+
+  return `
+    <div class="stage-card">
+      <div class="stage-num">${i + 1}</div>
+      <div class="stage-body">
+        <div class="stage-head">
+          <span class="stage-name">${st.name}</span>
+          <span class="stage-mode ${st.mode}">${modeLabel}</span>
+        </div>
+        <div class="stage-sentence">${sentence}</div>
+        <div class="stage-stop"><span class="stop-label">${stopLabel}:</span> <strong>${st.stop.value} ${st.stop.unit}</strong></div>
+        <div class="stage-note">${st.notes}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ----- 5. Chart -----
+function drawChart(sim, profile) {
+  const container = document.getElementById('chart');
+  const W = container.clientWidth || 720;
+  const H = 280;
+  const pad = { l: 40, r: 40, t: 16, b: 28 };
+  const tMax = sim.totalTime;
+  const pMax = 12;   // bar
+  const fMax = 5;    // ml/s
+
+  // Farben aus den CSS-Custom-Properties holen (für Theme-Support)
+  const css = getComputedStyle(document.documentElement);
+  const cLine = css.getPropertyValue('--line').trim();
+  const cFaint = css.getPropertyValue('--ink-faint').trim();
+  const cPressure = css.getPropertyValue('--pressure').trim();
+  const cFlow = css.getPropertyValue('--flow').trim();
+
+  const xs = t => pad.l + (t / tMax) * (W - pad.l - pad.r);
+  const ysP = p => H - pad.b - (p / pMax) * (H - pad.t - pad.b);
+  const ysF = f => H - pad.b - (f / fMax) * (H - pad.t - pad.b);
+
+  // grid
+  let grid = '';
+  for (let i = 0; i <= 6; i++) {
+    const y = pad.t + (i / 6) * (H - pad.t - pad.b);
+    grid += `<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="${cLine}" stroke-width="0.5"/>`;
+  }
+  for (let i = 0; i <= 8; i++) {
+    const x = pad.l + (i / 8) * (W - pad.l - pad.r);
+    const tv = (i / 8) * tMax;
+    grid += `<line x1="${x}" y1="${pad.t}" x2="${x}" y2="${H-pad.b}" stroke="${cLine}" stroke-width="0.5"/>`;
+    grid += `<text x="${x}" y="${H-pad.b+16}" fill="${cFaint}" font-size="10" font-family="JetBrains Mono" text-anchor="middle">${tv.toFixed(0)}s</text>`;
+  }
+  // y-Achsen Labels
+  for (let i = 0; i <= 6; i++) {
+    const y = pad.t + (i / 6) * (H - pad.t - pad.b);
+    const pv = pMax - (i / 6) * pMax;
+    const fv = fMax - (i / 6) * fMax;
+    grid += `<text x="${pad.l-6}" y="${y+3}" fill="${cPressure}" font-size="10" font-family="JetBrains Mono" text-anchor="end">${pv.toFixed(0)}</text>`;
+    grid += `<text x="${W-pad.r+6}" y="${y+3}" fill="${cFlow}" font-size="10" font-family="JetBrains Mono" text-anchor="start">${fv.toFixed(1)}</text>`;
+  }
+
+  // Stage separators (background bands)
+  let bands = '';
+  let lastT = 0;
+  const stageBoundaries = [];
+  let prevStage = sim.points[0]?.stage;
+  for (let i = 1; i < sim.points.length; i++) {
+    if (sim.points[i].stage !== prevStage) {
+      stageBoundaries.push({ t: sim.points[i].t, label: sim.points[i].stage, prev: prevStage });
+      prevStage = sim.points[i].stage;
+    }
+  }
+  // alternierende Bänder — im Light Mode dunkler, im Dark Mode heller
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const bandColor = isLight ? 'rgba(60,40,20,0.025)' : 'rgba(255,255,255,0.015)';
+  let bandStart = 0;
+  const allBoundaries = [...stageBoundaries.map(b => b.t), tMax];
+  allBoundaries.forEach((bt, i) => {
+    if (i % 2 === 0) {
+      bands += `<rect x="${xs(bandStart)}" y="${pad.t}" width="${xs(bt) - xs(bandStart)}" height="${H - pad.t - pad.b}" fill="${bandColor}"/>`;
+    }
+    bandStart = bt;
+  });
+
+  // Stage Labels oben
+  let stageLabels = '';
+  let lastBoundary = 0;
+  const boundaries = [...stageBoundaries, { t: tMax, label: '' }];
+  let prevLabel = sim.points[0]?.stage || '';
+  boundaries.forEach((b, i) => {
+    const mid = (lastBoundary + b.t) / 2;
+    stageLabels += `<text x="${xs(mid)}" y="${pad.t-2}" fill="${cFaint}" font-size="9" font-family="JetBrains Mono" text-anchor="middle" letter-spacing="0.5">${prevLabel.toUpperCase()}</text>`;
+    prevLabel = b.label;
+    lastBoundary = b.t;
+  });
+
+  // Pfade
+  const ppath = sim.points.map((pt, i) => `${i === 0 ? 'M' : 'L'} ${xs(pt.t)} ${ysP(pt.p)}`).join(' ');
+  const fpath = sim.points.map((pt, i) => `${i === 0 ? 'M' : 'L'} ${xs(pt.t)} ${ysF(pt.f)}`).join(' ');
+
+  container.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" style="display:block;">
+      ${bands}
+      ${grid}
+      ${stageLabels}
+      <path d="${ppath}" fill="none" stroke="${cPressure}" stroke-width="2" stroke-linejoin="round"/>
+      <path d="${fpath}" fill="none" stroke="${cFlow}" stroke-width="2" stroke-linejoin="round" stroke-dasharray="0"/>
+    </svg>
+  `;
+}
+
+// ----- 6. Buttons -----
+document.getElementById('generate').addEventListener('click', render);
+document.getElementById('reset').addEventListener('click', () => location.reload());
+
+// ----- 7. Theme Toggle -----
+// Lädt aus localStorage; Default = dark; Toggle + persistiert
+(function initTheme() {
+  const saved = localStorage.getItem('maro-theme');
+  if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    if (current === 'light') {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('maro-theme', 'dark');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+      localStorage.setItem('maro-theme', 'light');
+    }
+    // Chart neu zeichnen, damit SVG-Farben aktualisiert werden
+    render();
+  });
+})();
+
+// auto-render einmal beim Start, damit man was sieht
+render();
+</script>
+</body>
+</html>
