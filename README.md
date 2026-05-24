@@ -6,7 +6,7 @@ Inspiriert vom [Espresso Profile Generator](https://decentespresso.com/blog/espr
 
 ## Was es macht
 
-Du beantwortest ein paar Fragen zu deiner Bohne (Röstgrad, Herkunft, was du hervorheben oder vermeiden möchtest, Dosis, Frische der Bohnen), und das Tool generiert dir ein passendes 4-Stage-Profil im Maro-Format — mit Druck- oder Flussprofil pro Stage, Limits und Stop-Bedingungen.
+Du beantwortest ein paar Fragen zu deiner Bohne (Röstgrad, Arabica/Robusta-Anteil, was du hervorheben oder vermeiden möchtest, Dosis, Frische der Bohnen), und das Tool generiert dir ein passendes 4-Stage-Profil im Maro-Format — mit Druck- oder Flussprofil pro Stage, Limits und Stop-Bedingungen.
 
 Das Profil bekommst du in zwei Formen:
 
@@ -42,6 +42,7 @@ Pro Eingabe-Dimension werden Basis-Werte (Temperatur, Peak-Druck, Pre-Infusion-Z
 |---|---|
 | Helle Röstung | +2 °C, längere Pre-Infusion, niedrigerer Peak |
 | Dunkle Röstung | −2 °C, sanfterer Peak |
+| Hoher Robusta-Anteil | Tiefere Temperatur, sanfterer Peak, kürzere PI |
 | Floral hervorheben | Flow-Bias, tieferer Druck, längere PI |
 | Body hervorheben | Pressure-Bias, höherer Peak |
 | Bitterkeit vermeiden | Decline-Stage mit niedrigerem End-Druck |

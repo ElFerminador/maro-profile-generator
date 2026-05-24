@@ -448,7 +448,7 @@
   <header>
     <div>
       <h1 class="title">Maro <em>Profile</em> Generator</h1>
-      <div class="subtitle">Regelbasiert · für Maro Model 1 · v0.4</div>
+      <div class="subtitle">Regelbasiert · für Maro Model 1 · v0.6</div>
     </div>
     <div style="display: flex; align-items: center; gap: 24px;">
       <button class="theme-toggle" id="themeToggle" aria-label="Hell/Dunkel umschalten" title="Hell/Dunkel umschalten">
@@ -489,14 +489,14 @@
       </div>
 
       <div class="field">
-        <label class="field-label">Herkunft</label>
-        <div class="opts" data-field="origin">
-          <label class="opt"><input type="radio" name="origin" value="kenya"><span class="dot"></span>Kenia</label>
-          <label class="opt"><input type="radio" name="origin" value="ethiopia"><span class="dot"></span>Äthiopien</label>
-          <label class="opt"><input type="radio" name="origin" value="africa"><span class="dot"></span>Anderes Afrika</label>
-          <label class="opt"><input type="radio" name="origin" value="colombia"><span class="dot"></span>Kolumbien</label>
-          <label class="opt"><input type="radio" name="origin" value="america"><span class="dot"></span>Anderes Amerika</label>
-          <label class="opt"><input type="radio" name="origin" value="other"><span class="dot"></span>Anderes / Blend</label>
+        <label class="field-label">Arabica / Robusta</label>
+        <div class="opts" data-field="blend">
+          <label class="opt"><input type="radio" name="blend" value="100a"><span class="dot"></span>100% Arabica</label>
+          <label class="opt"><input type="radio" name="blend" value="80a"><span class="dot"></span>80% Arabica / 20% Robusta</label>
+          <label class="opt"><input type="radio" name="blend" value="60a"><span class="dot"></span>60% Arabica / 40% Robusta</label>
+          <label class="opt"><input type="radio" name="blend" value="50a"><span class="dot"></span>50 / 50</label>
+          <label class="opt"><input type="radio" name="blend" value="20a"><span class="dot"></span>20% Arabica / 80% Robusta</label>
+          <label class="opt"><input type="radio" name="blend" value="0a"><span class="dot"></span>100% Robusta</label>
         </div>
       </div>
 
@@ -536,11 +536,7 @@
 
       <div class="field">
         <label class="field-label">Dosis (g)</label>
-        <select id="dose">
-          <option>14</option><option>15</option><option>16</option>
-          <option selected>18</option><option>19</option><option>20</option>
-          <option>21</option><option>22</option>
-        </select>
+        <select id="dose"></select>
       </div>
 
       <div class="field">
@@ -591,7 +587,7 @@
 const state = {
   roast: 'city',
   quality: 'outstanding',
-  origin: 'ethiopia',
+  blend: '100a',
   highlight: 'floral',
   avoid: 'bitter',
   intensity: 'medium',
@@ -615,7 +611,17 @@ document.querySelectorAll('.opts').forEach(group => {
   });
 });
 document.getElementById('intensity').addEventListener('change', e => state.intensity = e.target.value);
-document.getElementById('dose').addEventListener('change', e => state.dose = +e.target.value);
+
+// Dose dropdown: generiert 7-28g in 1g-Schritten, Default 18
+const doseSelect = document.getElementById('dose');
+for (let g = 7; g <= 28; g++) {
+  const opt = document.createElement('option');
+  opt.value = g;
+  opt.textContent = g;
+  if (g === 18) opt.selected = true;
+  doseSelect.appendChild(opt);
+}
+doseSelect.addEventListener('change', e => state.dose = +e.target.value);
 
 // ----- 2. Regelwerk -----
 /*
@@ -658,12 +664,21 @@ function buildProfile(s) {
     notes.push('Rauchige Röstung → kühler und sanfter, um Bitterkeit zu reduzieren.');
   }
 
-  // --- Herkunft ---
-  if (s.origin === 'kenya' || s.origin === 'ethiopia') {
-    preInfTime += 2;
-    notes.push('Ostafrikanische Bohne → längere Pre-Infusion betont die fruchtige Klarheit.');
-  } else if (s.origin === 'colombia' || s.origin === 'america') {
-    // balanced – keine Anpassung
+  // --- Arabica / Robusta-Blend ---
+  // Robusta hat mehr Cellulose und weniger Öl → mildere Extraktion nötig.
+  // Werte sind anteilig: bei 50/50 halber Robusta-Effekt etc.
+  const robustaShare = { '100a': 0, '80a': 0.2, '60a': 0.4, '50a': 0.5, '20a': 0.8, '0a': 1.0 }[s.blend] ?? 0;
+  let robustaNote = null;
+  if (robustaShare > 0) {
+    temp        -= 2.0 * robustaShare;   // bis −2 °C bei 100% Robusta
+    peakPressure -= 1.0 * robustaShare;  // bis −1.0 bar bei 100% Robusta
+    preInfTime   -= 2 * robustaShare;    // bis −2s bei 100% Robusta
+    if (robustaShare >= 0.5) {
+      robustaNote = `Hoher Robusta-Anteil (${Math.round(robustaShare * 100)}%) → tiefere Temperatur, sanfterer Peak und kürzere Pre-Infusion, um die kräftigere Crema nicht ins Bittere zu kippen.`;
+    } else if (robustaShare > 0) {
+      robustaNote = `Robusta-Anteil ${Math.round(robustaShare * 100)}% → leicht tiefer extrahieren, da Robusta weniger Öl und mehr Cellulose enthält.`;
+    }
+    notes.push(robustaNote);
   }
 
   // --- Hervorheben ---
